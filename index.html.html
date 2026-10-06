@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AlphaPEA Terminal | L'Ultime Comparateur ETF PEA & CTO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          terminal: {
+            bg: 'var(--bg)',
+            panel: 'var(--panel)',
+            ink: 'var(--ink)',
+            muted: 'var(--muted)',
+            line: 'var(--line)',
+            accent: 'var(--accent)',
+            accentHover: 'var(--accent-hover)',
+            success: 'var(--success)',
+            warning: 'var(--warning)',
+            danger: 'var(--danger)'
+          }
+        },
+        fontFamily: {
+          sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+          serif: ['Newsreader', 'Georgia', 'serif']
+        }
+      }
+    }
+  }
+</script>
+<style>
+:root {
+  --bg: #f4f6f9;
+  --panel: #ffffff;
+  --ink: #111827;
+  --muted: #4b5563;
+  --line: #e2e8f0;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+:root[data-theme="dark"] {
+  --bg: #090d16;
+  --panel: #111827;
+  --ink: #f3f4f6;
+  --muted: #9ca3af;
+  --line: #1f2937;
+  --accent: #3b82f6;
+  --accent-hover: #60a5fa;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+}
+
+html {
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+  scroll-behavior: smooth;
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans',sans-serif;transition:background-color 0.2s ease,color 0.2s ease;}
+
+.terminal-card {
+  background-color: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  border-radius: 1rem;
+}
+
+input[type=range] {
+  accent-color: var(--accent);
+}
+
+.scroll{overflow-x:auto;margin:1.2rem 0;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:36rem;font-size:.95rem}
+th,td{padding:.75rem 1rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+th{font-weight:600;font-family:'JetBrains Mono',monospace;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted)}
+
+.verdict{background:var(--panel);border-left:4px solid var(--accent);padding:1.2rem 1.4rem;border-radius:0 8px 8px 0;margin:1.2rem 0}
+.warn{border-left-color:var(--warning)}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+</style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-blue-500 selection:text-white">
+
+<header class="sticky top-0 z-50 backdrop-blur-xl bg-[var(--bg)]/90 border-b border-[var(--line)]">
+  <!-- Live Market Ticker Header -->
+  <div class="bg-[var(--panel)] border-b border-[var(--line)] text-xs font-mono py-1.5 px-4 overflow-hidden whitespace-nowrap flex items-center justify-between">
+    <div class="flex items-center space-x-6 overflow-x-auto no-scrollbar py-0.5">
+      <span class="flex items-center space-x-1.5 text-[var(--muted)]"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>MARCHÉS EN DIRECT :</span></span>
+      <span class="font-bold">MSCI World: <span class="text-[var(--success)]">+0.68%</span> (5,420.10)</span>
+      <span class="font-bold">S&P 500: <span class="text-[var(--success)]">+0.84%</span> (5,890.40)</span>
+      <span class="font-bold">Nasdaq 100: <span class="text-[var(--success)]">+1.12%</span> (20,410.80)</span>
+      <span class="font-bold">EUR/USD: <span class="text-[var(--warning)]">-0.12%</span> (1.0784)</span>
+    </div>
+    <div class="hidden md:block text-[var(--muted)]">AlphaPEA Engine v4.2</div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-emerald-500 flex items-center justify-center text-white font-mono font-bold text-lg shadow-lg">α</div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-bold text-base tracking-tight">AlphaPEA Terminal</span>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20 font-semibold">ULTIMATE 2026</span>
+        </div>
+        <div class="text-xs text-[var(--muted)] font-mono">Analyse & Simulateur ETF PEA/CTO</div>
+      </div>
+    </div>
+
+    <nav class="hidden xl:flex items-center space-x-1 font-medium text-sm">
+      <button onclick="switchTab('screener')" id="tab-screener" class="px-3 py-2 rounded-lg transition text-[var(--accent)] font-semibold bg-blue-500/10">Screener ETF</button>
+      <button onclick="switchTab('duel')" id="tab-duel" class="px-3 py-2 rounded-lg transition text-[var(--muted)] hover:text-[var(--ink)]">WPEA vs CW8</button>
+      <button onclick="switchTab('simulator')" id="tab-simulator" class="px-3 py-2 rounded-lg transition text-[var(--muted)] hover:text-[var(--ink)]">Simulateur DCA</button>
+      <button onclick="switchTab('arbitrage')" id="tab-arbitrage" class="px-3 py-2 rounded-lg transition text-[var(--muted)] hover:text-[var(--ink)]">Arbitrage Fiscal</button>
+      <button onclick="switchTab('faq')" id="tab-faq" class="px-3 py-2 rounded-lg transition text-[var(--muted)] hover:text-[var(--ink)]">FAQ Experte</button>
+      <button onclick="switchTab('academy')" id="tab-academy" class="px-3 py-2 rounded-lg transition text-[var(--muted)] hover:text-[var(--ink)]">Académie Swap</button>
+    </nav>
+
+    <div class="flex items-center space-x-3">
+      <button id="themeToggle" class="p-2.5 rounded-xl border border-[var(--line)] bg-[var(--panel)] text-[var(--ink)] hover:scale-105 transition shadow-sm" aria-label="Changer le thème">
+        <svg id="sunIcon" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+        <svg id="moonIcon" class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+      </button>
+      <button onclick="switchTab('simulator')" class="hidden sm:inline-flex bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg shadow-blue-500/20 transition">Simulation DCA</button>
+    </div>
+  </div>
+</header>
+
+<main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12 w-full">
+
+  <!-- ================= TAB 1: SCREENER & ETF DATABASE ================= -->
+  <section id="view-screener" class="space-y-6">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div>
+        <div class="text-xs font-mono uppercase tracking-widest text-[var(--accent)] font-bold mb-1">Univers d'Investissement 2026</div>
+        <h1 class="text-3xl sm:text-4xl font-serif font-bold tracking-tight">Screener Avancé PEA & CTO</h1>
+        <p class="text-sm text-[var(--muted)] mt-1">Explorez les meilleurs fonds indiciels mondiaux, américains, technologiques et émergents pour optimiser votre allocation patrimoniale.</p>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="filterScreener('all')" id="scr-all" class="px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-[var(--accent)] text-white transition">Tous (8)</button>
+        <button onclick="filterScreener('PEA')" id="scr-PEA" class="px-3 py-1.5 rounded-lg text-xs font-mono font-medium border border-[var(--line)] bg-[var(--panel)] hover:border-[var(--accent)] transition">PEA Uniquement</button>
+        <button onclick="filterScreener('World')" id="scr-World" class="px-3 py-1.5 rounded-lg text-xs font-mono font-medium border border-[var(--line)] bg-[var(--panel)] hover:border-[var(--accent)] transition">MSCI World</button>
+        <button onclick="filterScreener('US')" id="scr-US" class="px-3 py-1.5 rounded-lg text-xs font-mono font-medium border border-[var(--line)] bg-[var(--panel)] hover:border-[var(--accent)] transition">S&P 500 / Nasdaq</button>
+      </div>
+    </div>
+
+    <div class="terminal-card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm border-collapse">
+          <thead>
+            <tr class="border-b border-[var(--line)] bg-[var(--bg)]/50">
+              <th>Ticker / ISIN</th>
+              <th>Nom du Fonds</th>
+              <th>Indice Répliqué</th>
+              <th>Enveloppe</th>
+              <th>Réplication</th>
+              <th>Frais (TER)</th>
+              <th>Prix Part</th>
+              <th>Encours</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="screenerTableBody" class="font-mono text-xs">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Highlights grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
+      <div class="terminal-card p-4 space-y-2 border-l-4 border-l-blue-500">
+        <div class="text-[10px] font-mono text-[var(--muted)]">Le Challenger World</div>
+        <div class="font-bold text-sm">WPEA (iShares)</div>
+        <p class="text-xs text-[var(--muted)]">0.20% de frais, part à ~7€. Idéal pour les petits versements réguliers en PEA.</p>
+      </div>
+      <div class="terminal-card p-4 space-y-2 border-l-4 border-l-indigo-500">
+        <div class="text-[10px] font-mono text-[var(--muted)]">Le Pilier Historique</div>
+        <div class="font-bold text-sm">CW8 (Amundi)</div>
+        <p class="text-xs text-[var(--muted)]">Encours géant (~5.2 Md€), 0.38% de TER, part à ~686€. La référence long terme.</p>
+      </div>
+      <div class="terminal-card p-4 space-y-2 border-l-4 border-l-emerald-500">
+        <div class="text-[10px] font-mono text-[var(--muted)]">Le Champion US en PEA</div>
+        <div class="font-bold text-sm">ESE (Amundi S&P 500)</div>
+        <p class="text-xs text-[var(--muted)]">Exposition S&P 500 via swap éligible PEA avec un TER ultra-faible de 0.15%.</p>
+      </div>
+      <div class="terminal-card p-4 space-y-2 border-l-4 border-l-purple-500">
+        <div class="text-[10px] font-mono text-[var(--muted)]">La Tech Américaine en PEA</div>
+        <div class="font-bold text-sm">PUST (Amundi Nasdaq 100)</div>
+        <p class="text-xs text-[var(--muted)]">Les 100 plus grandes valeurs non financières du Nasdaq éligibles PEA. TER 0.23%.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TAB 2: DUEL WPEA vs CW8 (RICH TEXT) ================= -->
+  <section id="view-duel" class="space-y-8 hidden">
+    <div class="border-b border-[var(--line)] pb-6">
+      <div class="text-xs font-mono uppercase tracking-widest text-[var(--accent)] font-bold mb-1">Analyse Comparative Approfondie</div>
+      <h1 class="text-3xl sm:text-4xl font-serif font-bold tracking-tight">WPEA contre CW8 : même indice, coûts différents</h1>
+      <p class="text-xl font-serif text-[var(--muted)] mt-2">Comparaison de deux ETF MSCI World à réplication synthétique éligibles au PEA : IE0002XZSHO1 et LU1681043599.</p>
+      <div class="text-xs text-[var(--muted)] font-mono mt-3">Données publiques vérifiées 2026. Rédigé pour l'AlphaPEA Terminal.</div>
+    </div>
+
+    <div class="space-y-6 leading-relaxed">
+      <h2 class="text-2xl font-serif font-bold pt-4 border-t border-[var(--line)]">Résumé de l'arbitrage</h2>
+      <div class="verdict">
+        <p class="m-0 font-medium"><strong>Pour un investisseur long terme sur PEA qui verse régulièrement, WPEA est le choix le plus cohérent</strong> : même indice, même structure, frais inférieurs, prix de part très bas. CW8 garde l'avantage de l'ancienneté, de la taille et de la liquidité profonde.</p>
+      </div>
+
+      <h2 class="text-2xl font-serif font-bold">Les deux fonds face à face</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Caractéristique</th><th>WPEA</th><th>CW8</th></tr></thead>
+        <tbody>
+          <tr><td>Nom complet</td><td>iShares MSCI World Swap PEA UCITS ETF</td><td>Amundi MSCI World Swap UCITS ETF Acc EUR</td></tr>
+          <tr><td>ISIN</td><td>IE0002XZSHO1</td><td>LU1681043599</td></tr>
+          <tr><td>Indice de référence</td><td>MSCI World Net Total Return EUR</td><td>MSCI World Net Total Return EUR</td></tr>
+          <tr><td>Date de lancement</td><td>26 mars 2024</td><td>18 avril 2018</td></tr>
+          <tr><td>Frais courants (TER)</td><td>0,20 %</td><td>0,38 % (0,28 % selon certaines sources courtier)</td></tr>
+          <tr><td>Encours sous gestion</td><td>~1,21 Md€</td><td>~5,20 Md€</td></tr>
+          <tr><td>Prix unitaire de la part</td><td>~7,15 €</td><td>~686,50 €</td></tr>
+          <tr><td>Politique de dividendes</td><td>Capitalisation</td><td>Capitalisation</td></tr>
+          <tr><td>Éligibilité PEA</td><td>Oui</td><td>Oui</td></tr>
+        </tbody>
+      </table></div>
+      <p>Les deux fonds ont la même exposition : environ 85 % de la capitalisation boursière mondiale répartie sur 23 pays développés. La comparaison porte donc strictement sur les frais, la maturité et la flexibilité opérationnelle.</p>
+
+      <h2 class="text-2xl font-serif font-bold">Analyse détaillée des frais</h2>
+      <p>Les sources du marché donnent deux valeurs pour CW8 (0,38% ou 0,28%). Voici l'impact financier à long terme selon l'hypothèse de frais :</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Hypothèse Frais CW8</th><th>Écart Annuel avec WPEA</th><th>Impact estimé après 20 ans (sur capital)</th></tr></thead>
+        <tbody>
+          <tr><td>0,38 %</td><td>0,18 point de %</td><td>Environ 3,5 % de capital en moins</td></tr>
+          <tr><td>0,28 %</td><td>0,08 point de %</td><td>Environ 1,6 % de capital en moins</td></tr>
+        </tbody></table></div>
+      <p>Sur 100 000 € investis, cela représente plusieurs milliers d'euros de différence nette, avec un rendement brut strictement identique à l'indice.</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+        <div class="terminal-card p-6 space-y-3">
+          <h3 class="text-lg font-serif font-bold text-blue-500">Forces et limites de WPEA</h3>
+          <ul class="list-disc pl-5 space-y-2 text-sm text-[var(--muted)]">
+            <li>Frais de gestion plus bas (0,20 %) sans différence d'exposition.</li>
+            <li>Part à ~7 € : un versement mensuel de 50 à 200 € est investi presque en totalité, évitant le cash dormant (pas de fractions nécessaires).</li>
+            <li>Encours en forte croissance institutionnelle, éliminant tout risque de fermeture.</li>
+            <li>Historique encore court (moins de 3 ans), sans phase de krach séculaire traversée.</li>
+          </ul>
+        </div>
+        <div class="terminal-card p-6 space-y-3">
+          <h3 class="text-lg font-serif font-bold text-amber-500">Forces et limites de CW8</h3>
+          <ul class="list-disc pl-5 space-y-2 text-sm text-[var(--muted)]">
+            <li>Plus de 8 ans d'historique boursier, réplication et tracking difference parfaitement documentées.</li>
+            <li>Encours massif (~5.2 Md€) garantissant une liquidité institutionnelle instantanée.</li>
+            <li>Frais plus élevés (0,38 % affiché).</li>
+            <li>Prix de part élevé (~686 €), nécessitant des versements plus importants ou la gestion des fractions de parts chez votre courtier.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2 class="text-2xl font-serif font-bold">Risques communs inhérents aux ETF Swap</h2>
+      <ul class="list-disc pl-5 space-y-2 text-sm text-[var(--muted)]">
+        <li><strong>Contrepartie du swap</strong> : Le rendement dépend d'un contrat avec une grande institution financière. Les règles UCITS plafonnent l'exposition au risque de contrepartie à 10 %, avec des garanties journalières, mais le risque théorique subsiste.</li>
+        <li><strong>Éligibilité PEA</strong> : Le fonds doit en permanence détenir un panier d'actions européennes éligibles. Une modification réglementaire est rare mais aurait un impact fiscal.</li>
+        <li><strong>Tracking Difference</strong> : L'écart net réel avec l'indice MSCI World dépend de l'efficacité de gestion du gérant (prêt de titres, optimisation des swaps).</li>
+        <li><strong>Diversification illusoire</strong> : Détenir à la fois WPEA et CW8 n'apporte aucune diversification puisque l'indice sous-jacent est rigoureusement identique.</li>
+      </ul>
+
+      <h2 class="text-2xl font-serif font-bold">Verdict final</h2>
+      <div class="verdict">
+        <p class="m-0 font-medium">WPEA l'emporte sur le coût direct et la souplesse d'investissement fractionné. CW8 l'emporte sur l'historique et la taille. Si vous détenez déjà CW8 avec une plus-value importante, arbitrer vers WPEA doit intégrer le coût fiscal ou de transaction à peser minutieusement.</p>
+      </div>
+      <div class="verdict warn">
+        <p class="m-0 font-medium"><strong>Rappel réglementaire</strong> : Vérifiez toujours les derniers documents d'informations clés (DIC) et rapports annuels des émetteurs (iShares et Amundi) avant toute exécution d'ordre en bourse.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TAB 3: SIMULATEUR DCA & FRAIS ================= -->
+  <section id="view-simulator" class="space-y-6 hidden">
+    <div>
+      <div class="text-xs font-mono uppercase tracking-widest text-[var(--accent)] font-bold mb-1">Projection Patrimoniale</div>
+      <h2 class="text-3xl font-serif font-bold tracking-tight">Simulateur DCA Multi-ETF & Impact des Frais</h2>
+      <p class="text-sm text-[var(--muted)] mt-1">Calculez l'évolution de votre épargne à long terme en tenant compte des frais (TER) et de votre effort d'épargne mensuel.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div class="lg:col-span-5 terminal-card p-6 space-y-5">
+        <h3 class="font-bold text-base border-b border-[var(--line)] pb-3 flex items-center justify-between">
+          <span>Paramètres de Simulation</span>
+          <span class="text-xs font-mono text-[var(--accent)] bg-blue-500/10 px-2.5 py-1 rounded">Live Calc</span>
+        </h3>
+
+        <div class="space-y-4 text-sm">
+          <div>
+            <label class="block font-medium text-xs text-[var(--muted)] mb-1">Sélectionner l'ETF</label>
+            <select id="simEtfSelect" class="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg)] border border-[var(--line)] font-mono text-xs font-bold focus:outline-none focus:border-[var(--accent)]">
+              <!-- Filled via JS -->
+            </select>
+          </div>
+
+          <div>
+            <div class="flex justify-between font-medium mb-1">
+              <span class="text-xs text-[var(--muted)]">Capital Initial</span>
+              <span id="simCapVal" class="font-mono text-xs font-bold text-[var(--accent)]">5 000 €</span>
+            </div>
+            <input type="range" id="simCap" min="0" max="100000" step="1000" value="5000" class="w-full h-2 bg-[var(--line)] rounded-lg cursor-pointer">
+          </div>
+
+          <div>
+            <div class="flex justify-between font-medium mb-1">
+              <span class="text-xs text-[var(--muted)]">Épargne Mensuelle (DCA)</span>
+              <span id="simDcaVal" class="font-mono text-xs font-bold text-[var(--accent)]">300 € / mois</span>
+            </div>
+            <input type="range" id="simDca" min="50" max="2500" step="50" value="300" class="w-full h-2 bg-[var(--line)] rounded-lg cursor-pointer">
+          </div>
+
+          <div>
+            <div class="flex justify-between font-medium mb-1">
+              <span class="text-xs text-[var(--muted)]">Horizon de Placement</span>
+              <span id="simYearsVal" class="font-mono text-xs font-bold text-[var(--accent)]">25 ans</span>
+            </div>
+            <input type="range" id="simYears" min="1" max="35" step="1" value="25" class="w-full h-2 bg-[var(--line)] rounded-lg cursor-pointer">
+          </div>
+
+          <div>
+            <div class="flex justify-between font-medium mb-1">
+              <span class="text-xs text-[var(--muted)]">Rendement Brut Annuel Estimé</span>
+              <span id="simRateVal" class="font-mono text-xs font-bold text-[var(--accent)]">8.0 %</span>
+            </div>
+            <input type="range" id="simRate" min="2" max="15" step="0.5" value="8" class="w-full h-2 bg-[var(--line)] rounded-lg cursor-pointer">
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-[var(--bg)] border border-[var(--line)] text-xs text-[var(--muted)] space-y-1 font-mono">
+          <div>💡 <strong>Comparaison directe :</strong> WPEA (0.20%) vs CW8 (0.38%) génère une différence notable sur 20-30 ans.</div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-7 terminal-card p-6 space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 space-y-1">
+            <div class="text-[10px] font-mono font-bold text-[var(--accent)] uppercase tracking-wider">Valeur Finale Nette Estimée</div>
+            <div id="resFinalCapital" class="text-2xl sm:text-3xl font-mono font-bold">0 €</div>
+            <div id="resTotalGains" class="text-xs font-mono text-[var(--success)]">+0 € de plus-value nette</div>
+          </div>
+          <div class="p-4 rounded-xl bg-[var(--bg)] border border-[var(--line)] space-y-1">
+            <div class="text-[10px] font-mono font-bold text-[var(--muted)] uppercase tracking-wider">Total Versé (Principal)</div>
+            <div id="resTotalVersed" class="text-2xl sm:text-3xl font-mono font-bold text-[var(--ink)]">0 €</div>
+            <div id="resFeeCost" class="text-xs font-mono text-[var(--danger)]">Frais TER cumulés : 0 €</div>
+          </div>
+        </div>
+
+        <div class="relative h-72 sm:h-80 w-full">
+          <canvas id="alphaChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TAB 4: CALCULATEUR D'ARBITRAGE FISCAL ================= -->
+  <section id="view-arbitrage" class="space-y-6 hidden">
+    <div>
+      <div class="text-xs font-mono uppercase tracking-widest text-[var(--accent)] font-bold mb-1">Optimisation Fiscale</div>
+      <h2 class="text-3xl font-serif font-bold tracking-tight">Simulateur d'Arbitrage & Frais de Transfert</h2>
+      <p class="text-sm text-[var(--muted)] mt-1">Calculez l'intérêt réel de basculer d'un ETF cher vers un ETF moins chargé en frais.</p>
+    </div>
+
+    <div class="terminal-card p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+      <div class="space-y-5 text-sm">
+        <h3 class="text-xl font-serif font-semibold">Arbitrage : quand est-ce rentable ?</h3>
+        <p class="text-[var(--muted)] leading-relaxed">
+          Sur un <strong>PEA de plus de 5 ans</strong>, arbitrer vos lignes (vendre un ETF pour en racheter un autre) n'entraîne pas d'impôt immédiat sur le revenu, seuls les prélèvements sociaux (17.2%) s'appliquent lors des retraits.
+        </p>
+        <p class="text-[var(--muted)] leading-relaxed">
+          Sur un <strong>CTO</strong>, la vente déclenche la Flat Tax de 30% sur les plus-values réalisées, ce qui détruit une partie du capital capitalisant. L'arbitrage y est donc rarement judicieux à court terme.
+        </p>
+        <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-[var(--warning)] font-medium font-mono">
+          ⚡ <strong>Règle empirique :</strong> Plus l'encours est élevé et plus l'écart de TER est grand, plus l'arbitrage est amorti rapidement.
+        </div>
+      </div>
+
+      <div class="terminal-card bg-[var(--bg)] p-6 space-y-4 border border-[var(--line)] font-mono text-xs">
+        <h4 class="font-bold text-sm uppercase tracking-wider text-[var(--accent)]">Paramètres d'arbitrage</h4>
+        
+        <div class="space-y-3">
+          <div>
+            <label class="block text-[var(--muted)] mb-1">Encours total actuel (€)</label>
+            <input type="number" id="arbTotal" value="50000" class="w-full px-3.5 py-2 rounded-xl bg-[var(--panel)] border border-[var(--line)] font-bold text-sm">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[var(--muted)] mb-1">Ancien TER (%)</label>
+              <input type="number" id="arbOldFee" value="0.38" step="0.01" class="w-full px-3.5 py-2 rounded-xl bg-[var(--panel)] border border-[var(--line)] font-bold text-sm">
+            </div>
+            <div>
+              <label class="block text-[var(--muted)] mb-1">Nouveau TER (%)</label>
+              <input type="number" id="arbNewFee" value="0.20" step="0.01" class="w-full px-3.5 py-2 rounded-xl bg-[var(--panel)] border border-[var(--line)] font-bold text-sm">
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-[var(--line)] space-y-2">
+          <div class="flex justify-between">
+            <span class="text-[var(--muted)]">Économie brute annuelle :</span>
+            <span id="arbResYear" class="font-bold text-[var(--success)] text-sm">+90.00 € / an</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-[var(--muted)]">Économie cumulée sur 10 ans :</span>
+            <span id="arbRes10" class="font-bold text-[var(--success)] text-sm">+900.00 €</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TAB 5: FAQ EXPERTE ================= -->
+  <section id="view-faq" class="space-y-6 hidden">
+    <div>
+      <div class="text-xs font-mono uppercase tracking-widest text-[var(--accent)] font-bold mb-1">Base de Connaissances & Questions Fréquentes</div>
+      <h2 class="text-3xl font-serif font-bold tracking-tight">FAQ Experte : ETF PEA & CTO</h2>
+      <p class="text-sm text-[var(--muted)] mt-1">Réponses détaillées aux interrogations des investisseurs sur les fonds synthétiques, les risques et la stratégie d'allocation.</p>
+    </div>
+
+    <div class="space-y-4 max-w-4xl mx-auto">
+      <!-- FAQ Item 1 -->
+      <div class="terminal-card overflow-hidden">
+        <button onclick="toggleFaq(1)" class="w-full p-5 text-left font-semibold flex items-center justify-between hover:bg-[var(--bg)] transition">
+          <span class="text-base font-serif">1. Comment un ETF américain ou mondial (comme WPEA ou CW8) peut-il être éligible au PEA ?</span>
+          <span id="faq-icon-1" class="font-mono text-xl transition-transform duration-200">+</span>
+        </button>
+        <div id="faq-content-1" class="hidden p-5 pt-0 text-sm text-[var(--muted)] leading-relaxed border-t border-[var(--line)] bg-[var(--bg)]/50">
+          Le Plan d'Épargne en Actions (PEA) impose par la loi française de détenir au moins 75 % de titres d'entreprises ayant leur siège dans l'Union Européenne. Pour contourner cette limite géographique tout en restant éligible, les émetteurs (comme iShares ou Amundi) utilisent une <strong>réplication synthétique indirecte</strong> via un contrat d'échange (swap). Le fonds achète un panier d'actions européennes éligibles au PEA et signe un accord avec une grande banque (la contrepartie) qui s'engage à lui reverser exactement la performance de l'indice MSCI World ou S&P 500.
+        </div>
+      </div>
+
+      <!-- FAQ Item 2 -->
+      <div class="terminal-card overflow-hidden">
+        <button onclick="toggleFaq(2)" class="w-full p-5 text-left font-semibold flex items-center justify-between hover:bg-[var(--bg)] transition">
+          <span class="text-base font-serif">2. Dois-je vendre mon CW8 pour acheter du WPEA si j'ai déjà une forte plus-value ?</span>
+          <span id="faq-icon-2" class="font-mono text-xl transition-transform duration-200">+</span>
+        </button>
+        <div id="faq-content-2" class="hidden p-5 pt-0 text-sm text-[var(--muted)] leading-relaxed border-t border-[var(--line)] bg-[var(--bg)]/50">
+          Sur un PEA de plus de 5 ans, vendre vos parts de CW8 ne génère pas d'impôt sur le revenu (seuls les prélèvements sociaux de 17,2 % s'appliquent lors des retraits futurs). Cependant, si vous vendez en plus-value pour racheter du WPEA, vous subissez un coût d'opportunité et parfois des frais de courtage. Si votre encours sur CW8 est massif, la différence de TER (0,38% vs 0,20%) mettra de nombreuses années à amortir l'arbitrage. Il est souvent plus judicieux de <strong>laisser dormir la ligne CW8</strong> et d'orienter vos nouveaux versements mensuels (DCA) vers le WPEA.
+        </div>
+      </div>
+
+      <!-- FAQ Item 3 -->
+      <div class="terminal-card overflow-hidden">
+        <button onclick="toggleFaq(3)" class="w-full p-5 text-left font-semibold flex items-center justify-between hover:bg-[var(--bg)] transition">
+          <span class="text-base font-serif">3. Quel est le problème du prix de part élevé de CW8 (~686 €) comparé à WPEA (~7 €) ?</span>
+          <span id="faq-icon-3" class="font-mono text-xl transition-transform duration-200">+</span>
+        </button>
+        <div id="faq-content-3" class="hidden p-5 pt-0 text-sm text-[var(--muted)] leading-relaxed border-t border-[var(--line)] bg-[var(--bg)]/50">
+          Avec un prix de part à ~686 €, si vous épargnez 150 € par mois, vous ne pouvez pas acheter une part entière de CW8 chaque mois (il vous manquerait de l'argent ou vous devriez attendre 5 mois). Le solde non investi reste alors sous forme de cash dormant non rémunéré. Avec WPEA à ~7 €, vos 150 € permettent d'acheter environ 21 parts immédiatement, réduisant au minimum le cash dormant. C'est un avantage majeur pour les petits et moyens investisseurs pratiquant le DCA, sauf si votre courtier gère les parts fractionnées.
+        </div>
+      </div>
+
+      <!-- FAQ Item 4 -->
+      <div class="terminal-card overflow-hidden">
+        <button onclick="toggleFaq(4)" class="w-full p-5 text-left font-semibold flex items-center justify-between hover:bg-[var(--bg)] transition">
+          <span class="text-base font-serif">4. Quel est le risque de contrepartie du swap en cas de faillite de la banque émettrice ?</span>
+          <span id="faq-icon-4" class="font-mono text-xl transition-transform duration-200">+</span>
+        </button>
+        <div id="faq-content-4" class="hidden p-5 pt-0 text-sm text-[var(--muted)] leading-relaxed border-t border-[var(--line)] bg-[var(--bg)]/50">
+          Les règles européennes UCITS encadrent extrêmement strictement les ETF synthétiques. Le risque de contrepartie net (la valeur du swap) ne peut légalement pas dépasser <strong>10 % de l'actif net du fonds</strong>. De plus, ces contrats sont ajustés et collatéralisés quotidiennement. En cas de défaillance de la contrepartie, la perte maximale théorique pour l'investisseur est donc bornée et très faible, bien que le risque zéro n'en exista pas en finance.
+        </div>
+      </div>
+
+      <!-- FAQ Item 5 -->
+      <div class="terminal-card overflow-hidden">
+        <button onclick="toggleFaq(5)" class="w-full p-5 text-left font-semibold flex items-center justify-between hover:bg-[var(--bg)] transition">
+          <span class="text-base font-serif">5. Faut-il combiner plusieurs ETF comme WPEA, ESE et PAASI dans son PEA ?</span>
+          <span id="faq-icon-5" class="font-mono text-xl transition-transform duration-200">+</span>
+        </button>
+        <div id="faq-content-5" class="hidden p-5 pt-0 text-sm text-[var(--muted)] leading-relaxed border-t border-[var(--line)] bg-[var(--bg)]/50">
+          Le MSCI World (WPEA ou CW8) contient déjà plus de 60 % d'actions américaines. Ajouter du S&P 500 (ESE) en plus crée une surpondération massive (un "overlap") des États-Unis dans votre portefeuille. En revanche, ajouter du PAASI (Marchés Émergents) à hauteur de 10 % à 20 % d'un portefeuille World permet d'obtenir une véritable diversification géographique mondiale que le MSCI World ne couvre pas totalement (Chine, Inde, Taïwan, Brésil, etc.).
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TAB 6: ACADÉMIE SWAP ================= -->
+  <section id="view-academy" class="space-y-6 hidden">
+    <div>
+      <div class="text-xs font-mono uppercase tracking-widest text-[var(--accent)] font-bold mb-1">Knowledge Base</div>
+      <h2 class="text-3xl font-serif font-bold tracking-tight">Académie Swap & Éligibilité PEA</h2>
+      <p class="text-sm text-[var(--muted)] mt-1">Comprenez le mécanisme juridique et financier qui permet d'investir dans le monde entier depuis un PEA.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="terminal-card p-6 space-y-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-[var(--accent)] flex items-center justify-center font-mono font-bold">01</div>
+        <h3 class="font-serif font-bold text-lg">La Réplication Synthétique</h3>
+        <p class="text-sm text-[var(--muted)] leading-relaxed">
+          Le fonds détient un panier d'actions européennes éligibles au PEA et signe un contrat d'échange (swap) avec une contrepartie bancaire pour verser la performance exacte du MSCI World ou du S&P 500.
+        </p>
+      </div>
+
+      <div class="terminal-card p-6 space-y-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-[var(--success)] flex items-center justify-center font-mono font-bold">02</div>
+        <h3 class="font-serif font-bold text-lg">Le Cadre UCITS & Sécurité</h3>
+        <p class="text-sm text-[var(--muted)] leading-relaxed">
+          En Europe, la directive UCITS encadre strictement ces opérations. Le risque de contrepartie du swap est rigoureusement plafonné à 10 % de l'actif net, protégeant l'investisseur particulier.
+        </p>
+      </div>
+
+      <div class="terminal-card p-6 space-y-3">
+        <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center font-mono font-bold">03</div>
+        <h3 class="font-serif font-bold text-lg">Tracking Difference</h3>
+        <p class="text-sm text-[var(--muted)] leading-relaxed">
+          L'efficacité d'un ETF synthétique se mesure par sa <em>tracking difference</em>. Certains fonds parviennent à surperformer légèrement leur indice brut grâce à une gestion active des prêts de titres au sein du panier de substitution.
+        </p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="border-t border-[var(--line)] mt-20 bg-[var(--panel)] py-10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-[var(--muted)]">
+    <div class="flex items-center space-x-2">
+      <div class="w-6 h-6 rounded bg-gradient-to-tr from-blue-600 to-emerald-500 flex items-center justify-center text-white font-bold text-xs">α</div>
+      <span class="font-bold text-[var(--ink)]">AlphaPEA Terminal</span>
+      <span>• Analyse comparative PEA & CTO 2026</span>
+    </div>
+    <div>Ce document est informatif et ne constitue pas un conseil en investissement personnalisé.</div>
+  </div>
+</footer>
+
+<script>
+  // Complete ETF Database
+  const etfsData = [
+    { ticker: "WPEA", isin: "IE0002XZSHO1", name: "iShares MSCI World Swap PEA UCITS ETF", index: "MSCI World Net Return", env: "PEA", repl: "Synthétique", ter: 0.20, price: 7.15, aum: "1.2 Md€", category: "World" },
+    { ticker: "CW8", isin: "LU1681043599", name: "Amundi MSCI World Swap UCITS ETF Acc", index: "MSCI World Net Return", env: "PEA", repl: "Synthétique", ter: 0.38, price: 686.50, aum: "5.2 Md€", category: "World" },
+    { ticker: "ESE", isin: "FR0011871110", name: "Amundi S&P 500 UCITS ETF - EUR (C)", index: "S&P 500 Net Total Return", env: "PEA", repl: "Synthétique", ter: 0.15, price: 38.40, aum: "2.4 Md€", category: "US" },
+    { ticker: "PUST", isin: "LU1681047384", name: "Amundi PEA Nasdaq-100 UCITS ETF Acc", index: "Nasdaq-100 Net Total Return", env: "PEA", repl: "Synthétique", ter: 0.23, price: 42.10, aum: "1.8 Md€", category: "US" },
+    { ticker: "PAASI", isin: "FR0013412020", name: "Amundi PEA Émergents UCITS ETF Acc", index: "MSCI Emerging Markets", env: "PEA", repl: "Synthétique", ter: 0.50, price: 24.10, aum: "850 M€", category: "Emerging" },
+    { ticker: "Vanguard S&P", isin: "IE00BFMXXD54", name: "Vanguard S&P 500 UCITS ETF USD Acc", index: "S&P 500 Net Total Return", env: "CTO", repl: "Physique", ter: 0.07, price: 102.30, aum: "45.0 Md€", category: "US" },
+    { ticker: "EUNL", isin: "IE00B4L5Y983", name: "iShares Core MSCI World UCITS ETF", index: "MSCI World Net Return", env: "CTO", repl: "Physique", ter: 0.20, price: 98.40, aum: "68.0 Md€", category: "World" },
+    { ticker: "EQAC", isin: "LU1829221024", name: "Amundi MSCI Europe UCITS ETF Acc", index: "MSCI Europe Net Return", env: "PEA", repl: "Physique", ter: 0.12, price: 185.00, aum: "1.1 Md€", category: "Europe" }
+  ];
+
+  // Theme Handling
+  const themeToggle = document.getElementById('themeToggle');
+  const htmlEl = document.documentElement;
+
+  themeToggle.addEventListener('click', () => {
+    const current = htmlEl.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    htmlEl.setAttribute('data-theme', next);
+    if (next === 'dark') htmlEl.classList.add('dark');
+    else htmlEl.classList.remove('dark');
+    updateChartTheme();
+  });
+
+  // Tab Switching
+  function switchTab(tabId) {
+    ['screener', 'duel', 'simulator', 'arbitrage', 'faq', 'academy'].forEach(t => {
+      const el = document.getElementById('view-' + t);
+      if (el) el.classList.add('hidden');
+      const btn = document.getElementById('tab-' + t);
+      if (btn) {
+        btn.classList.remove('text-[var(--accent)]', 'font-semibold', 'bg-blue-500/10');
+        btn.classList.add('text-[var(--muted)]');
+      }
+    });
+
+    const activeEl = document.getElementById('view-' + tabId);
+    if (activeEl) activeEl.classList.remove('hidden');
+    const activeBtn = document.getElementById('tab-' + tabId);
+    if (activeBtn) {
+      activeBtn.classList.add('text-[var(--accent)]', 'font-semibold', 'bg-blue-500/10');
+      activeBtn.classList.remove('text-[var(--muted)]');
+    }
+  }
+
+  // Screener Table Rendering
+  function renderScreenerTable(filter = 'all') {
+    const tbody = document.getElementById('screenerTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const filtered = etfsData.filter(e => {
+      if (filter === 'PEA') return e.env === 'PEA';
+      if (filter === 'World') return e.category === 'World';
+      if (filter === 'US') return e.category === 'US';
+      return true;
+    });
+
+    filtered.forEach(e => {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-[var(--bg)] transition border-b border-[var(--line)]';
+      tr.innerHTML = `
+        <td class="py-3 px-4 font-bold text-[var(--accent)]">${e.ticker}<br><span class="text-[10px] text-[var(--muted)] font-normal">${e.isin}</span></td>
+        <td class="py-3 px-4 font-sans font-medium text-[var(--ink)]">${e.name}</td>
+        <td class="py-3 px-4 text-[var(--muted)]">${e.index}</td>
+        <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${e.env === 'PEA' ? 'bg-emerald-500/10 text-[var(--success)] border border-emerald-500/20' : 'bg-blue-500/10 text-[var(--accent)] border border-blue-500/20'}">${e.env}</span></td>
+        <td class="py-3 px-4 text-[var(--muted)]">${e.repl}</td>
+        <td class="py-3 px-4 font-bold text-[var(--ink)]">${e.ter.toFixed(2)} %</td>
+        <td class="py-3 px-4">${e.price.toFixed(2)} €</td>
+        <td class="py-3 px-4 text-[var(--muted)]">${e.aum}</td>
+        <td class="py-3 px-4 text-right">
+          <button onclick="selectForSim('${e.ticker}')" class="px-2.5 py-1 rounded-lg bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] transition text-[10px] font-bold">Simuler</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function filterScreener(cat) {
+    ['all', 'PEA', 'World', 'US'].forEach(c => {
+      const btn = document.getElementById('scr-' + c);
+      if (btn) {
+        btn.className = c === cat 
+          ? 'px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-[var(--accent)] text-white transition'
+          : 'px-3 py-1.5 rounded-lg text-xs font-mono font-medium border border-[var(--line)] bg-[var(--panel)] hover:border-[var(--accent)] transition';
+      }
+    });
+    renderScreenerTable(cat);
+  }
+
+  function selectForSim(ticker) {
+    document.getElementById('simEtfSelect').value = ticker;
+    switchTab('simulator');
+    runSim();
+  }
+
+  function populateSimSelect() {
+    const sel = document.getElementById('simEtfSelect');
+    if (!sel) return;
+    sel.innerHTML = '';
+    etfsData.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.ticker;
+      opt.textContent = `${e.ticker} - ${e.name} (TER: ${e.ter}%)`;
+      sel.appendChild(opt);
+    });
+  }
+
+  // Simulation & Chart Logic
+  let alphaChart = null;
+
+  const simEtfSelect = document.getElementById('simEtfSelect');
+  const simCapInput = document.getElementById('simCap');
+  const simDcaInput = document.getElementById('simDca');
+  const simYearsInput = document.getElementById('simYears');
+  const simRateInput = document.getElementById('simRate');
+
+  const simCapVal = document.getElementById('simCapVal');
+  const simDcaVal = document.getElementById('simDcaVal');
+  const simYearsVal = document.getElementById('simYearsVal');
+  const simRateVal = document.getElementById('simRateVal');
+
+  const resFinalCapital = document.getElementById('resFinalCapital');
+  const resTotalGains = document.getElementById('resTotalGains');
+  const resTotalVersed = document.getElementById('resTotalVersed');
+  const resFeeCost = document.getElementById('resFeeCost');
+
+  function fmtEur(val) {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val);
+  }
+
+  function runSim() {
+    const ticker = simEtfSelect.value;
+    const etf = etfsData.find(e => e.ticker === ticker) || etfsData[0];
+
+    const P0 = parseFloat(simCapInput.value);
+    const PMT = parseFloat(simDcaInput.value);
+    const years = parseInt(simYearsInput.value);
+    const grossRate = parseFloat(simRateInput.value) / 100;
+    const ter = etf.ter / 100;
+
+    simCapVal.textContent = fmtEur(P0);
+    simDcaVal.textContent = fmtEur(PMT) + ' / mois';
+    simYearsVal.textContent = years + ' ans';
+    simRateVal.textContent = (grossRate * 100).toFixed(1) + ' %';
+
+    const netRate = grossRate - ter;
+    const months = years * 12;
+
+    let labels = [];
+    let capData = [];
+    let versedData = [];
+
+    let currentVal = P0;
+    let totalVersed = P0;
+    let totalFees = 0;
+
+    for (let m = 0; m <= months; m++) {
+      if (m > 0) {
+        const interest = currentVal * (netRate / 12);
+        currentVal += interest + PMT;
+        totalVersed += PMT;
+        totalFees += (currentVal * (ter / 12));
+      }
+      if (m % 12 === 0) {
+        labels.push('Année ' + (m / 12));
+        capData.push(Math.round(currentVal));
+        versedData.push(Math.round(totalVersed));
+      }
+    }
+
+    resFinalCapital.textContent = fmtEur(currentVal);
+    resTotalGains.textContent = `+${fmtEur(currentVal - totalVersed)} de gains nets`;
+    resTotalVersed.textContent = fmtEur(totalVersed);
+    resFeeCost.textContent = `Frais TER cumulés : ${fmtEur(totalFees)}`;
+
+    updateChart(labels, capData, versedData);
+  }
+
+  function initChart() {
+    const ctx = document.getElementById('alphaChart').getContext('2d');
+    const isDark = htmlEl.getAttribute('data-theme') === 'dark';
+
+    alphaChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: 'Capital Net Total',
+            data: [],
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.2,
+            borderWidth: 3
+          },
+          {
+            label: 'Total Versé (Principal)',
+            data: [],
+            borderColor: isDark ? '#4b5563' : '#9ca3af',
+            borderDash: [4, 4],
+            fill: false,
+            tension: 0.1,
+            borderWidth: 2
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: isDark ? '#f3f4f6' : '#111827', font: { family: 'Plus Jakarta Sans', size: 11 } }
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            callbacks: { label: c => c.dataset.label + ': ' + fmtEur(c.raw) }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+            ticks: { color: isDark ? '#9ca3af' : '#4b5563', font: { size: 10 } }
+          },
+          y: {
+            grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+            ticks: {
+              color: isDark ? '#9ca3af' : '#4b5563',
+              font: { size: 10 },
+              callback: v => v >= 1000000 ? (v/1000000).toFixed(1) + 'M €' : (v >= 1000 ? (v/1000).toFixed(0) + 'k €' : v + ' €')
+            }
+          }
+        }
+      }
+    });
+
+    runSim();
+  }
+
+  function updateChart(labels, capData, versedData) {
+    if (!alphaChart) return;
+    alphaChart.data.labels = labels;
+    alphaChart.data.datasets[0].data = capData;
+    alphaChart.data.datasets[1].data = versedData;
+    alphaChart.update();
+  }
+
+  function updateChartTheme() {
+    if (!alphaChart) return;
+    const isDark = htmlEl.getAttribute('data-theme') === 'dark';
+    alphaChart.options.plugins.legend.labels.color = isDark ? '#f3f4f6' : '#111827';
+    alphaChart.options.scales.x.grid.color = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+    alphaChart.options.scales.y.grid.color = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+    alphaChart.update();
+  }
+
+  // Arbitrage Calculator
+  function calcArb() {
+    const total = parseFloat(document.getElementById('arbTotal').value) || 0;
+    const oldFee = parseFloat(document.getElementById('arbOldFee').value) || 0;
+    const newFee = parseFloat(document.getElementById('arbNewFee').value) || 0;
+    const diff = oldFee - newFee;
+
+    const annual = total * (diff / 100);
+    const tenYears = annual * 10;
+
+    document.getElementById('arbResYear').textContent = `+${fmtEur(annual)} / an`;
+    document.getElementById('arbRes10').textContent = `+${fmtEur(tenYears)}`;
+  }
+
+  // FAQ Accordion Toggle
+  function toggleFaq(id) {
+    const content = document.getElementById('faq-content-' + id);
+    const icon = document.getElementById('faq-icon-' + id);
+    if (content.classList.contains('hidden')) {
+      content.classList.remove('hidden');
+      icon.textContent = '−';
+      icon.style.transform = 'rotate(180deg)';
+    } else {
+      content.classList.add('hidden');
+      icon.textContent = '+';
+      icon.style.transform = 'rotate(0deg)';
+    }
+  }
+
+  // Event Listeners setup
+  [simEtfSelect, simCapInput, simDcaInput, simYearsInput, simRateInput].forEach(el => {
+    if(el) {
+      el.addEventListener('input', runSim);
+      el.addEventListener('change', runSim);
+    }
+  });
+
+  [document.getElementById('arbTotal'), document.getElementById('arbOldFee'), document.getElementById('arbNewFee')].forEach(el => {
+    if(el) el.addEventListener('input', calcArb);
+  });
+
+  window.onload = function() {
+    renderScreenerTable('all');
+    populateSimSelect();
+    initChart();
+    calcArb();
+  };
+</script>
+</body>
+</html>
